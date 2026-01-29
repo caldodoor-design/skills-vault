@@ -4,7 +4,7 @@ description: Windows PowerShell環境でのUTF-8/CP932文字化け防止策とCo
 skills: [asking-codex-review]
 ---
 
-# Japanese Encoding Best Practices for Antigravity
+# Japanese Encoding Best Practices
 
 Windows PowerShell環境で日本語ファイルを扱う際の文字化け（mojibake）を防ぐためのベストプラクティス集。
 
@@ -22,10 +22,10 @@ UTF-8で保存された日本語ファイルを、CP932として読み取ると�
 
 ### 2.1 ファイル作成時
 
-**推奨: Antigravityの `write_to_file` ツールを使用**
+**推奨: Claude CodeのWriteツールを使用**
 
 ```
-このツールは内部的にUTF-8で書き込むため、PowerShellを介さずに正しいエンコーディングでファイルを作成できる。
+Writeツールは内部的にUTF-8で書き込むため、PowerShellを介さずに正しいエンコーディングでファイルを作成できる。
 ```
 
 **PowerShellを使う場合:**
@@ -70,7 +70,7 @@ ignore them and focus on the CODE blocks only."
 
 ## 3. チェックリスト
 
-- [ ] `write_to_file` ツールを優先使用
+- [ ] `Write` ツールを優先使用
 - [ ] PowerShell使用時は `chcp 65001` を先に実行
 - [ ] ファイル読み取りは `-Encoding UTF8` を指定
 - [ ] Codexレビュー時は「コードのみ検証」を明示
@@ -81,4 +81,4 @@ ignore them and focus on the CODE blocks only."
 |------|------|--------|
 | `縺ｮ` `繧` などの文字列 | UTF-8をCP932として読み取り | `-Encoding UTF8` を指定 |
 | `?????` | 文字コード範囲外 | BOM付きUTF-8で保存 |
-| 一部のみ文字化け | here-string内でのエンコーディング混在 | ファイルから読み込むか `write_to_file` を使用 |
+| 一部のみ文字化け | here-string内でのエンコーディング混在 | ファイルから読み込むか `Write` を使用 |

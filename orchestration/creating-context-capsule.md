@@ -1,301 +1,72 @@
 ---
 name: creating-context-capsule
-description: コンテキストリセット前にセッション状態（capsule/plan/tests）を保存し、バリデーションを通す手順を定義する。コンテキストが肥大化した時やハンドオフ時に使う。
-skills: [booting-sub-agent]
+description: コンテキストリセット前にセッション状態を.claude/memory/に保存する手順を定義する。コンテキストが肥大化した時やセッション終了時に使う。
 ---
 
-# CREATE_CONTEXT_CAPSULE
+# Context Capsule 作成手順
 
 ## Purpose
 
-This skill defines the workflow for generating a **Context Capsule** before clearing context. A Context Capsule preserves the essential session state, implementation plan, and test criteria to enable seamless continuation after a context reset.
+コンテキストリセットやセッション終了前に、作業状態を `.claude/memory/` に保存して次回の継続を可能にする。
 
 ---
 
 ## When to Use
 
-- Before context becomes too large and needs to be cleared
-- When handing off work to another agent or session
-- At natural breakpoints in long-running tasks
-- When explicitly requested by the user or Antigravity
+- コンテキストが肥大化してリセットが必要な時
+- セッション終了時
+- 長時間タスクの区切りで状態保存したい時
+- ユーザーから明示的に要求された時
 
 ---
 
 ## Workflow
 
-### Step 1: Generate `capsule.md`
+### Step 1: sessions.md を更新
 
-Create a high-level summary of the current session state.
+**Location:** `.claude/memory/sessions.md`
 
-**Location:** `.agent/handover/capsule.md`
-
-**Required Sections:**
+以下を追記する：
 
 ```markdown
-# Session Capsule
+## YYYY-MM-DD セッションN
 
-## Session ID
-[Timestamp or unique identifier]
+### 実施内容
+- （何をしたか箇条書き）
 
-## Current State
-[Brief description of where we are in the task]
+### 変更ファイル
+- path/to/file_a
+- path/to/file_b
 
-## Completed Work
-- [List of completed items]
+### 変更規模
+- Nファイル変更、-X行 / +Y行
 
-## In Progress
-- [List of items currently being worked on]
-
-## Pending
-- [List of remaining items]
-
-## Key Decisions Made
-- [Important decisions and their rationale]
-
-## Blockers / Open Questions
-- [Any unresolved issues]
-
-## Files Modified This Session
-- [List of changed files]
+### 未完了・申し送り
+- （次回に引き継ぐべきこと）
 ```
 
 ---
 
-### Step 2: Generate `plan.md`
+### Step 2: decisions.md を更新（方針決定があった場合のみ）
 
-Create a detailed implementation specification following the **HANDOVER_CONTRACT** structure.
+**Location:** `.claude/memory/decisions.md`
 
-**Location:** `.agent/handover/plan.md`
-
-**Required Structure (HANDOVER_CONTRACT):**
-
-```markdown
-# Implementation Plan
-
-## Metadata
-- **Task ID:** [Unique identifier]
-- **Created:** [Timestamp]
-- **Author:** [Agent identifier]
-- **Status:** [Draft | Validated | Ready]
-
-## Objective
-[Clear, concise statement of what needs to be achieved]
-
-## Context
-[Background information necessary to understand the task]
-
-## Technical Specification
-
-### Architecture
-[System design and component relationships]
-
-### Implementation Steps
-1. [Step with specific file paths and code changes]
-2. [Step with specific file paths and code changes]
-...
-
-### Dependencies
-- [External dependencies]
-- [Internal dependencies]
-
-### Constraints
-- [Technical constraints]
-- [Business constraints]
-
-## Acceptance Criteria
-- [ ] [Criterion 1]
-- [ ] [Criterion 2]
-...
-
-## Risk Assessment
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| ... | ... | ... |
-
-## Rollback Plan
-[Steps to revert changes if needed]
-```
+新たな方針・アーキテクチャ判断があれば追記する。
 
 ---
 
-### Step 3: Generate `tests.md`
-
-Define specific test cases and acceptance criteria.
-
-**Location:** `.agent/handover/tests.md`
-
-**Required Structure:**
-
-```markdown
-# Test Cases & Acceptance Criteria
-
-## Unit Tests
-
-### [Test Suite Name]
-| Test Case | Input | Expected Output | Priority |
-|-----------|-------|-----------------|----------|
-| ... | ... | ... | P0/P1/P2 |
-
-## Integration Tests
-
-### [Integration Scenario]
-- **Setup:** [Required state]
-- **Steps:**
-  1. [Action]
-  2. [Action]
-- **Expected Result:** [Outcome]
-
-## Acceptance Criteria Checklist
-
-### Functional
-- [ ] [Criterion with specific, measurable outcome]
-
-### Non-Functional
-- [ ] [Performance criterion]
-- [ ] [Security criterion]
-
-## Edge Cases
-- [ ] [Edge case 1]
-- [ ] [Edge case 2]
-
-## Regression Tests
-- [ ] [Existing functionality that must not break]
-```
-
----
-
-### Step 4: Validate the Plan
-
-**MANDATORY:** Run the validation script to ensure `plan.md` meets the HANDOVER_CONTRACT.
-
-```bash
-npx ts-node scripts/validate-handover.ts .agent/handover/plan.md
-```
-
----
-
-### Step 5: Handle Validation Result
-
-#### If Validation FAILS:
-
-1. **DO NOT proceed** to the completion message
-2. Read the validation errors carefully
-3. Fix the identified issues in `plan.md`
-4. Re-run validation: `npx ts-node scripts/validate-handover.ts .agent/handover/plan.md`
-5. Repeat until validation passes
-
-**Example fixes:**
-- Missing sections → Add required sections
-- Incomplete criteria → Add specific, measurable criteria
-- Vague steps → Add file paths and concrete code changes
-
-#### If Validation PASSES:
-
-Proceed to Step 6.
-
----
-
-### Step 6: Output Completion Message
-
-**Only after validation passes**, output:
+### Step 3: 完了メッセージ
 
 ```
-✅ Context Capsule Ready - Safe to Clear Context
-
-Generated files:
-- .agent/handover/capsule.md
-- .agent/handover/plan.md
-- .agent/handover/tests.md
-
-Validation: PASSED
-```
-
----
-
-## File Structure
-
-After successful execution:
-
-```
-.agent/
-  handover/
-    capsule.md    # Session state summary
-    plan.md       # Implementation specification
-    tests.md      # Test cases and criteria
-```
-
----
-
-## Validation Loop Flowchart
-
-```
-+---------------------------+
-|   Generate capsule.md     |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|   Generate plan.md        |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|   Generate tests.md       |
-+-------------+-------------+
-              |
-              v
-+---------------------------+
-|   Run validate-handover   |
-+-------------+-------------+
-              |
-              v
-         +--------+
-         | Pass?  |
-         +---+----+
-        NO   |   YES
-    +--------+--------+
-    |                 |
-    v                 v
-+-------+    +------------------------+
-| Fix   |    | Output:                |
-| plan  |    | "Context Capsule       |
-+---+---+    |  Ready - Safe to       |
-    |        |  Clear Context"        |
-    +------->+------------------------+
-   (retry)
+Context Capsule 保存完了
+- .claude/memory/sessions.md 更新済み
+- .claude/memory/decisions.md 更新済み（該当があれば）
 ```
 
 ---
 
 ## Important Rules
 
-1. **Never skip validation** - The validation step is mandatory
-2. **Never output completion message before validation passes**
-3. **Keep capsule.md concise** - It's a summary, not a full log
-4. **Keep plan.md detailed** - It must be self-contained for continuation
-5. **Keep tests.md specific** - Vague criteria are not acceptable
-6. **All three files must be generated** - Partial capsules are invalid
-
----
-
-## Example Usage
-
-When context is becoming large:
-
-```
-Agent: I notice context is getting large. Initiating Context Capsule generation...
-
-[Generates capsule.md]
-[Generates plan.md]
-[Generates tests.md]
-[Runs validation]
-
-Agent: ✅ Context Capsule Ready - Safe to Clear Context
-
-Generated files:
-- .agent/handover/capsule.md
-- .agent/handover/plan.md
-- .agent/handover/tests.md
-
-Validation: PASSED
-```
+1. sessions.md は追記のみ（過去の記録を編集しない）
+2. decisions.md は方針変更があった場合のみ追記
+3. 簡潔に書く（コンテキストウィンドウは配列 — 長いログは次回のトークンを食う）

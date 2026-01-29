@@ -64,12 +64,12 @@ codex exec --skip-git-repo-check -C '.' 'この関数のバグを特定してく
 codex exec --skip-git-repo-check -C '.' 'ユーザー認証のためのミドルウェアを作成してください'
 ```
 
-### Antigravity専用: 日本語ドキュメントの検証
+### 日本語ドキュメントの検証
 
 日本語ドキュメントのロジックを検証する際、以下の指示をプロンプトに加えることで、環境依存の文字化け（mojibake）に起因する誤判定を回避できる。
 
 ```bash
-codex exec --skip-git-repo-check -C '.' "Review .agent/skills/FILE_NAME.md. This is a Japanese document. Focus strictly on the logic in CODE blocks only. If you see encoding issues in the prose, IGNORE them. Reply with Issues: 0件 if code logic is correct."
+codex exec --skip-git-repo-check -C '.' "Review FILE_NAME.md. This is a Japanese document. Focus strictly on the logic in CODE blocks only. If you see encoding issues in the prose, IGNORE them. Reply with Issues: 0件 if code logic is correct."
 ```
 
 ## レビュー結果の解釈
@@ -85,7 +85,7 @@ Codexからのレビュー結果は以下のステータスで返される：
 |----------|------|
 | Minor | 修正してから報告（再レビュー不要） |
 | Major | 修正後、再度Codexにレビュー依頼 |
-| Blocker | 即座にAntigravityへエスカレーション |
+| Blocker | 即座にユーザーへエスカレーション |
 
 ---
 

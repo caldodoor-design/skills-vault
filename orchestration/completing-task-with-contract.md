@@ -1,118 +1,89 @@
 ---
 name: completing-task-with-contract
-description: タスク完了前に品質ゲート（Lightweight/Heavyweight）を通過させ、未検証のまま完了させないための手順を定義する。タスクを完了としてマークする直前に使う。
+description: タスク完了前に品質ゲート（型チェック・ビルド・Codexレビュー）を通過させ、未検証のまま完了させないための手順を定義する。タスクを完了としてマークする直前に使う。
 skills: [asking-codex-review]
 ---
 
-# COMPLETE_TASK_WITH_CONTRACT
+# 品質ゲート付きタスク完了
 
 ## Purpose
 
-To enforce strict quality gates before marking a task as "Complete" in the Agent OS. This prevents premature closure of tasks that haven't met the contract requirements.
+タスク完了前に品質チェックを必ず通すことで、未検証コードのマージを防ぐ。
 
 ---
 
 ## When to Use
 
-- When you believe a Task is finished.
-- BEFORE running `claude task complete`.
+- タスクが完了したと判断した時
+- コード変更を伴うタスクの完了報告前
 
 ---
 
 ## Workflow
 
-### Step 1: Identify Task Type
+### Step 1: タスク種別を判定
 
-Determine the nature of the task to select the appropriate "Gate Level".
-
-- **Type A: Documentation / Design / Analysis**
-  - Changes: Markdown files only, or no file changes.
-  - Gate: **Lightweight Gate**
-
-- **Type B: Code Implementation**
-  - Changes: Source code (`.ts`, `.js`, `.py`, `.ps1`), Config files.
-  - Gate: **Heavyweight Gate**
+| 種別 | 対象 | ゲートレベル |
+|------|------|-------------|
+| **Type A** | ドキュメント・設計・分析 | Lightweight |
+| **Type B** | コード実装 | Heavyweight |
 
 ---
 
-### Step 2: Run Validation Gate
+### Step 2: 品質ゲート実行
 
 #### Lightweight Gate (Type A)
 
-```bash
-# 1. Validate Handover Contract
-npx ts-node scripts/validate-handover.ts .agent/handover/plan.md
-
-# 2. Check for "TODO" or "WIP" markers in changed files
-# (Manual check by agent)
-```
+- [ ] 変更ファイルに TODO/WIP マーカーが残っていないか確認
+- [ ] ドキュメントの内容が正確か確認
 
 #### Heavyweight Gate (Type B)
 
-```powershell
-# 1. Validate Handover Contract (Must be valid)
-npx ts-node scripts/validate-handover.ts .agent/handover/plan.md
+```bash
+# 1. 型チェック
+npm run type-check
 
-# 2. Run Light Hook (Syntax/Type check)
-powershell -File .\scripts\hook-light.ps1
+# 2. ビルド
+npm run build
 
-# 3. Run Skill Contamination Check
-npx ts-node scripts/validate-skill-usage.ts
-
-# 4. Run Heavy Hook (Codex Deep Review)
-# CRITICAL: Address ALL issues raised by Codex.
-powershell -File .\scripts\hook-heavy.ps1
+# 3. Codexレビュー
+codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox -C "." "レビュープロンプト"
 ```
 
 ---
 
-### Step 3: Verification Result
+### Step 3: 結果判定
 
-#### ❌ Rejection (If ANY check fails)
+#### ❌ NG（いずれかのチェックが失敗）
 
-If any command returns a non-zero exit code or Codex reports issues:
+1. タスクを完了にしない
+2. 問題を修正
+3. Step 2 を再実行
 
-1. **DO NOT** complete the task.
-2. Fix the reported issues.
-3. Re-run Step 2.
+#### ✅ OK（全チェック通過）
 
-#### ✅ Approval (If ALL checks pass)
-
-1. Update `task.md` (Legacy Tracker)
-   - Mark the item as `[x]`.
-
-2. Update Telemetry
-   - Log the success event.
-   ```powershell
-   npx ts-node scripts/telemetry.ts log success "Task <ID> Completed via Contract Gate"
-   ```
-
-3. **Complete the Task in OS**
-   ```powershell
-   claude task complete <TASK_ID>
-   ```
+1. 完了報告を作成
+2. TaskUpdate でステータスを completed に更新
 
 ---
 
-## Example Usage
+## 完了報告フォーマット
 
-**Agent:** "I have finished implementing the user login feature."
+```text
+## 完了報告
 
-**Self-Correction:** "Wait, I must verify against the contract before closing."
+### 実施内容
+（何をしたか簡潔に）
 
-**Action:**
-```powershell
-# It's a code change, so Heavy Gate
-npx ts-node scripts/validate-handover.ts .agent/handover/plan.md
-powershell -File .\scripts\hook-light.ps1
-powershell -File .\scripts\hook-heavy.ps1
-```
+### 変更ファイル
+- path/to/file_a
+- path/to/file_b
 
-**Result:**
-`hook-heavy.ps1` returns "No issues found".
+### 検証結果
+（実行したコマンドと結果）
 
-**Completion:**
-```powershell
-npx ts-node scripts/telemetry.ts log success "Task T-101 Completed"
-claude task complete T-101
+### Codexレビュー結果
+- Status: OK / Issues Found
+- Severity: （該当する場合）
+- 対応: （修正した場合はその内容）
 ```

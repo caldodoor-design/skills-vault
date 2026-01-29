@@ -25,4 +25,4 @@ skills: []
 2. 各ファイルの行数をチェック（500行超過の検知）
 3. 各ファイルのYAMLフロントマターを確認（description品質チェック）
 4. 内容の重複を目視チェック
-5. 問題があればAskUserQuestionToolで報告・判断を仰ぐ
+5. 問題があればAskUserQuestionで報告・判断を仰ぐ
