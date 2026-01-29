@@ -19,6 +19,7 @@ git submodule update --init --recursive
 |-------------|-----|------|
 | `thinking/` | Foundational | 思考プロセスの固定 |
 | `domain-guard/` | Partner | ツールの触り方の標準化 |
+| `domain-work/` | Partner | 実装テクニック（Chrome拡張、Smart Passbook Engine等） |
 | `orchestration/` | Enterprise | ワークフロー・タスク管理 |
 | `tdd-github-automation/` | Enterprise | TDD駆動のGitHub自動化 |
 
