@@ -15,13 +15,13 @@ git submodule update --init --recursive
 
 ## 構造
 
-| ディレクトリ | 層 | 用途 |
-|-------------|-----|------|
-| `thinking/` | Foundational | 思考プロセスの固定 |
-| `domain-guard/` | Partner | ツールの触り方の標準化 |
-| `domain-work/` | Partner | 実装テクニック（Chrome拡張、Smart Passbook Engine等） |
-| `orchestration/` | Enterprise | ワークフロー・タスク管理 |
-| `tdd-github-automation/` | Enterprise | TDD駆動のGitHub自動化 |
+| ディレクトリ | 層 | ファイル数 | 用途 |
+|-------------|-----|-----------|------|
+| `thinking/` | Foundational | 9 | 思考プロセスの固定（デバッグ、ブレインストーミング、完了前検証等） |
+| `domain-guard/` | Partner | 5 | ツールの触り方の標準化（シークレット保護、Webアプリテスト等） |
+| `domain-work/` | Enterprise | 60 | 実装テクニック（ドキュメント操作、ファイル整理、テスト修正等） |
+| `orchestration/` | Enterprise | 7 | ワークフロー・タスク管理（スキル作成等） |
+| `tdd-github-automation/` | Enterprise | 1 | TDD駆動のGitHub自動化 |
 
 ## Skills設計原則
 
